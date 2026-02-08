@@ -1,0 +1,944 @@
+<html lang="pl"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUXOR — Kompleksowe Utrzymanie Czystości</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&amp;family=Open+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+        body { font-family: 'Open Sans', sans-serif; }
+        h1,h2,h3,h4,h5,h6 { font-family: 'Montserrat', sans-serif; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #141C28; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #0099CC, #B8D400); border-radius: 4px; }
+
+        /* Shimmer badge */
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        .shimmer-badge {
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.08) 75%, transparent 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        /* Ping dot */
+        @keyframes ping { 0% { transform: scale(1); opacity: 1; } 75%,100% { transform: scale(2.5); opacity: 0; } }
+        .ping-dot::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: #B8D400;
+            animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        /* Scroll arrow */
+        @keyframes bounce-arrow { 0%,100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
+        .scroll-arrow { animation: bounce-arrow 2s ease-in-out infinite; }
+
+        /* Float animation */
+        @keyframes float { 0%,100% { transform: translateY(0px) rotate(0deg); } 33% { transform: translateY(-8px) rotate(1deg); } 66% { transform: translateY(4px) rotate(-1deg); } }
+        .float-card { animation: float 6s ease-in-out infinite; }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #0099CC, #B8D400);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Reveal animations */
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .reveal-left { opacity: 0; transform: translateX(-60px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal-left.active { opacity: 1; transform: translateX(0); }
+        .reveal-right { opacity: 0; transform: translateX(60px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal-right.active { opacity: 1; transform: translateX(0); }
+        .reveal-scale { opacity: 0; transform: scale(0.9); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal-scale.active { opacity: 1; transform: scale(1); }
+
+        /* Stagger children */
+        .stagger-children .reveal:nth-child(1) { transition-delay: 0ms; }
+        .stagger-children .reveal:nth-child(2) { transition-delay: 100ms; }
+        .stagger-children .reveal:nth-child(3) { transition-delay: 200ms; }
+        .stagger-children .reveal:nth-child(4) { transition-delay: 300ms; }
+        .stagger-children .reveal:nth-child(5) { transition-delay: 400ms; }
+        .stagger-children .reveal:nth-child(6) { transition-delay: 500ms; }
+
+        /* Magnetic button */
+        .magnetic-btn {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .magnetic-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+        .magnetic-btn:hover::before { width: 300px; height: 300px; }
+
+        /* Card glow */
+        .card-glow {
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card-glow::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, #0099CC, #B8D400);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+        .card-glow:hover::before { opacity: 1; }
+        .card-glow:hover { transform: translateY(-8px); box-shadow: 0 20px 60px rgba(0,153,204,0.15); }
+
+        /* Gallery overlay */
+        .gallery-item img { transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .gallery-item:hover img { transform: scale(1.1); }
+        .gallery-item .overlay {
+            opacity: 0;
+            transition: all 0.4s ease;
+            background: linear-gradient(180deg, transparent 0%, rgba(20,28,40,0.9) 100%);
+        }
+        .gallery-item:hover .overlay { opacity: 1; }
+
+        /* Noise texture */
+        .noise-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        /* Nav blur */
+        .nav-blur { backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8); }
+
+        /* Gradient border bottom on nav link */
+        .nav-link { position: relative; }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 0;
+            width: 0; height: 2px;
+            background: linear-gradient(90deg, #0099CC, #B8D400);
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        /* Stat number gradient */
+        .stat-number {
+            background: linear-gradient(135deg, #0099CC, #B8D400);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Parallax subtle */
+        .parallax-slow { transition: transform 0.1s linear; }
+
+        /* Cursor glow effect */
+        .cursor-glow {
+            position: fixed;
+            width: 400px; height: 400px;
+            border-radius: 50%;
+            pointer-events: none;
+            background: radial-gradient(circle, rgba(0,153,204,0.06) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Marquee */
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .marquee-track { animation: marquee 30s linear infinite; }
+
+        /* Hero gradient orbs */
+        @keyframes orb1 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.1); } 66% { transform: translate(-20px,30px) scale(0.9); } }
+        @keyframes orb2 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(-40px,20px) scale(0.9); } 66% { transform: translate(20px,-30px) scale(1.1); } }
+        .orb-1 { animation: orb1 8s ease-in-out infinite; }
+        .orb-2 { animation: orb2 10s ease-in-out infinite; }
+
+        /* Counter animation */
+        .counter { display: inline-block; }
+
+        /* Input focus */
+        .form-input:focus { border-color: #0099CC; box-shadow: 0 0 0 3px rgba(0,153,204,0.1); }
+
+        /* Mobile menu */
+        .mobile-menu { clip-path: circle(0% at calc(100% - 2.5rem) 2rem); transition: clip-path 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .mobile-menu.open { clip-path: circle(150% at calc(100% - 2.5rem) 2rem); }
+
+        /* Grain overlay for hero */
+        .hero-grain::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0,153,204,0.3) 0%, rgba(20,28,40,0.8) 50%, rgba(184,212,0,0.15) 100%);
+            z-index: 1;
+        }
+
+        /* CTA section glow blobs */
+        @keyframes blob1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(40px,-30px) scale(1.2)} }
+        @keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-30px,40px) scale(1.15)} }
+
+        /* Smooth section transitions */
+        section { position: relative; }
+
+        /* Reference card hover */
+        .ref-card { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .ref-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body class="bg-[#F7F7F5] text-[#1E2D3D] antialiased overflow-x-hidden">
+
+
+
+
+    <!-- Cursor Glow -->
+    <div class="cursor-glow hidden lg:block" id="cursorGlow" style="left: 554px; top: 78px;"></div>
+
+    <!-- NAVIGATION -->
+    <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-white/70 border-b border-gray-200/50" id="navbar" style="border-bottom-color: rgba(0, 0, 0, 0.06); background: rgba(255, 255, 255, 0.85);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex lg:h-20 h-16 items-center justify-between">
+                <!-- Logo -->
+                <a href="#" class="flex items-center gap-2 group">
+                    <div class="flex w-9 h-9 rounded-lg items-center justify-center" style="background: linear-gradient(135deg, #0099CC, #B8D400)">
+                        <span class="text-white font-bold text-sm" style="font-family: 'Montserrat', sans-serif; letter-spacing: -0.05em;">L</span>
+                    </div>
+                    <span class="text-lg font-semibold tracking-tighter" style="font-family: 'Montserrat', sans-serif; color: #1E2D3D">LUXOR</span>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden lg:flex items-center gap-8">
+                    <a href="#onas" class="nav-link text-sm font-medium text-gray-600 hover:text-[#1E2D3D] transition-colors">O nas</a>
+                    <a href="#oferta" class="nav-link text-sm font-medium text-gray-600 hover:text-[#1E2D3D] transition-colors">Oferta</a>
+                    <a href="#galeria" class="nav-link text-sm font-medium text-gray-600 hover:text-[#1E2D3D] transition-colors">Galeria</a>
+                    <a href="#referencje" class="nav-link text-sm font-medium text-gray-600 hover:text-[#1E2D3D] transition-colors">Referencje</a>
+                    <a href="#kontakt" class="nav-link text-sm font-medium text-gray-600 hover:text-[#1E2D3D] transition-colors">Kontakt</a>
+                </div>
+
+                <!-- CTA Button -->
+                <div class="hidden lg:flex items-center gap-3">
+                    <a href="tel:+48505874144" class="magnetic-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white" style="background: linear-gradient(135deg, #0099CC, #0088b5);">
+                        <iconify-icon icon="solar:phone-calling-linear" width="18" style="stroke-width:1.5"></iconify-icon>
+                        <span>Zadzwoń</span>
+                    </a>
+                </div>
+
+                <!-- Mobile hamburger -->
+                <button class="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors" id="hamburgerBtn" onclick="toggleMobileMenu()">
+                    <div class="flex flex-col gap-1.5" id="hamburgerIcon">
+                        <span class="w-5 h-0.5 bg-[#1E2D3D] rounded-full transition-all duration-300" id="bar1"></span>
+                        <span class="w-5 h-0.5 bg-[#1E2D3D] rounded-full transition-all duration-300" id="bar2"></span>
+                        <span class="w-3.5 h-0.5 bg-[#1E2D3D] rounded-full transition-all duration-300" id="bar3"></span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu fixed inset-0 z-40 bg-white/95 nav-blur flex flex-col items-center justify-center gap-6 lg:hidden" id="mobileMenu">
+        <a href="#onas" onclick="toggleMobileMenu()" class="text-2xl font-medium text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">O nas</a>
+        <a href="#oferta" onclick="toggleMobileMenu()" class="text-2xl font-medium text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">Oferta</a>
+        <a href="#galeria" onclick="toggleMobileMenu()" class="text-2xl font-medium text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">Galeria</a>
+        <a href="#referencje" onclick="toggleMobileMenu()" class="text-2xl font-medium text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">Referencje</a>
+        <a href="#kontakt" onclick="toggleMobileMenu()" class="text-2xl font-medium text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">Kontakt</a>
+        <div class="mt-4">
+            <a href="tel:+48505874144" class="inline-flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold text-white" style="background: linear-gradient(135deg, #0099CC, #0088b5);">
+                <iconify-icon icon="solar:phone-calling-linear" width="20"></iconify-icon>
+                Zadzwoń teraz
+            </a>
+        </div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section class="relative min-h-screen flex items-center overflow-hidden noise-bg" style="background: #0a1420;">
+        <!-- Background image -->
+        <div class="hero-grain absolute top-0 right-0 bottom-0 left-0">
+            <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/1337a5a4-9ba0-4e4e-bc7d-144d0ec9a19a_3840w.jpg" alt="Cleaning" class="w-full h-full object-cover opacity-40" style="filter: saturate(0.6);">
+        </div>
+
+        <!-- Animated orbs -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full orb-1 opacity-30" style="background: radial-gradient(circle, rgba(0,153,204,0.4) 0%, transparent 70%); filter: blur(60px);"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full orb-2 opacity-25" style="background: radial-gradient(circle, rgba(184,212,0,0.4) 0%, transparent 70%); filter: blur(60px);"></div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 lg:py-0 w-full">
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <!-- Left content -->
+                <div class="space-y-8">
+                    <!-- Badge -->
+                    <div class="reveal inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/10 bg-white/5 shimmer-badge active">
+                        <span class="relative w-2 h-2 rounded-full bg-[#B8D400] ping-dot"></span>
+                        <span class="text-xs font-medium text-white/80 tracking-wide uppercase">Działamy od 2012 roku</span>
+                    </div>
+
+                    <!-- Heading -->
+                    <div class="reveal active" style="">
+                        <h1 class="tracking-tighter leading-none" style="font-family: 'Montserrat', sans-serif;">
+                            <span class="block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white">Kompleksowe</span>
+                            <span class="block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mt-1">Utrzymanie</span>
+                            <span class="block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold gradient-text mt-1">Czystości</span>
+                        </h1>
+                    </div>
+
+                    <!-- Description -->
+                    <p class="reveal text-base sm:text-lg text-white/60 max-w-lg leading-relaxed active" style="">
+                        Profesjonalne sprzątanie dla firm i instytucji. Ponad 12 lat doświadczenia w województwie pomorskim i warmińsko-mazurskim.
+                    </p>
+
+                    <!-- Buttons -->
+                    <div class="reveal flex flex-col sm:flex-row gap-4 active" style="">
+                        <a href="#kontakt" class="magnetic-btn inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-white shadow-lg shadow-cyan-500/25" style="background: linear-gradient(135deg, #0099CC, #0BB8A0);">
+                            <span>Skontaktuj się</span>
+                            <iconify-icon icon="solar:arrow-right-linear" width="18"></iconify-icon>
+                        </a>
+                        <a href="#oferta" class="magnetic-btn inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-white border border-white/20 hover:bg-white/10 transition-colors">
+                            <span>Nasza oferta</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right - floating card -->
+                <div class="reveal-right hidden lg:block active">
+                    <div class="float-card relative">
+                        <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-black/40" style="aspect-ratio: 4/3;">
+                            <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/2104a68e-330e-432a-93c8-fbd544d74dc0_1600w.jpg" alt="Maszyna czyszcząca" class="w-full h-full object-cover" style="">
+                            <div class="absolute top-0 right-0 bottom-0 left-0" style="background: linear-gradient(135deg, rgba(0,153,204,0.2) 0%, rgba(184,212,0,0.1) 100%)"></div>
+                        </div>
+                        <!-- Floating badge on card -->
+                        <div class="absolute -bottom-4 -left-4 bg-white/95 nav-blur rounded-2xl p-4 shadow-xl shadow-black/10">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #B8D400, #8CAA00);">
+                                    <iconify-icon icon="solar:verified-check-linear" width="22" class="text-white"></iconify-icon>
+                                </div>
+                                <div class="">
+                                    <p class="text-xs font-semibold text-[#1E2D3D]" style="font-family:'Montserrat',sans-serif;">Certyfikowana jakość</p>
+                                    <p class="text-xs text-gray-500">Gwarancja profesjonalizmu</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Floating stat on card -->
+                        <div class="absolute -top-4 -right-4 bg-white/95 nav-blur rounded-2xl px-5 py-3 shadow-xl shadow-black/10">
+                            <p class="text-2xl font-bold gradient-text tracking-tight" style="font-family:'Montserrat',sans-serif;">70+</p>
+                            <p class="text-xs text-gray-500">Specjalistów</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 scroll-arrow">
+            <div class="flex flex-col items-center gap-2">
+                <span class="text-xs text-white/40 uppercase tracking-widest">Przewiń</span>
+                <iconify-icon icon="solar:alt-arrow-down-linear" width="20" class="text-white/40"></iconify-icon>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS BAR -->
+    <section class="relative z-10 -mt-1" style="background: linear-gradient(180deg, #0a1420 0%, #F7F7F5 100%);">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-2xl lg:rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-6 sm:p-8 lg:p-10">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 stagger-children">
+                    <div class="reveal text-center lg:text-left">
+                        <div class="stat-number text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter" style="font-family:'Montserrat',sans-serif;" data-target="12">0+</div>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Lat doświadczenia</p>
+                    </div>
+                    <div class="reveal text-center lg:text-left">
+                        <div class="stat-number text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter" style="font-family:'Montserrat',sans-serif;" data-target="500">0+</div>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Zadowolonych klientów</p>
+                    </div>
+                    <div class="reveal text-center lg:text-left">
+                        <div class="stat-number text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter" style="font-family:'Montserrat',sans-serif;" data-target="70">0</div>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Osobowy zespół</p>
+                    </div>
+                    <div class="reveal text-center lg:text-left">
+                        <div class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter stat-number" style="font-family:'Montserrat',sans-serif;">24/7</div>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Dostępność</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="onas" class="py-24 lg:py-32 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                <!-- Left - text -->
+                <div class="space-y-6">
+                    <div class="reveal">
+                        <span class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest" style="color: #0099CC;">
+                            <span class="w-8 h-px" style="background: #0099CC;"></span>
+                            Poznaj nas
+                        </span>
+                    </div>
+                    <h2 class="reveal text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-[#1E2D3D]" style="font-family: Montserrat, sans-serif;">
+                        O Nas
+                    </h2>
+                    <p class="reveal text-base text-gray-600 leading-relaxed" style="">
+                        Firma LUXOR zajmuje się profesjonalnym sprzątaniem od 2012 roku. Historię zawodowych doświadczeń tworzymy na terenie województwa pomorskiego i warmińsko-mazurskiego.
+                    </p>
+                    <p class="reveal text-base text-gray-600 leading-relaxed" style="">
+                        Ofertę tworzymy kreatywnie, elastycznie i indywidualnie pod każdego klienta. Zaplecze maszynowe jakie posiadamy pozwala realizować każde zlecenie — od codziennego sprzątania biur po gruntowne doczyszczanie hal produkcyjnych.
+                    </p>
+                    <!-- Contact box -->
+                    <div class="reveal rounded-2xl p-6 border" style="background: linear-gradient(135deg, rgba(0, 153, 204, 0.05) 0%, rgba(184, 212, 0, 0.05) 100%); border-color: rgba(0, 153, 204, 0.15);">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background: linear-gradient(135deg, #0099CC, #B8D400);">
+                                <iconify-icon icon="solar:phone-calling-linear" width="24" class="text-white"></iconify-icon>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-[#1E2D3D]" style="font-family:'Montserrat',sans-serif;">Bezpośredni telefon do właścicielki</p>
+                                <a href="tel:+48505874144" class="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity" style="font-family:'Montserrat',sans-serif; color:#0099CC;">+48 505 874 144</a>
+                                <p class="text-xs text-gray-500 mt-1">Indywidualnie ustalimy szczegóły i cenę usługi.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right - image -->
+                <div class="reveal-right relative">
+                    <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-gray-300/50" style="aspect-ratio: 4/3;">
+                        <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/c5725e28-e3bc-45ca-beae-22e46d95e459_1600w.jpg" alt="Hala magazynowa" class="w-full h-full object-cover">
+                        <div class="rounded-3xl absolute top-0 right-0 bottom-0 left-0" style="background: linear-gradient(135deg, rgba(0,153,204,0.1) 0%, transparent 50%)"></div>
+                    </div>
+                    <!-- Decorative dots -->
+                    <div class="absolute -bottom-6 -right-6 w-24 h-24 opacity-20" style="background-image: radial-gradient(circle, #0099CC 1.5px, transparent 1.5px); background-size: 12px 12px;"></div>
+                    <div class="absolute -top-6 -left-6 w-16 h-16 opacity-20" style="background-image: radial-gradient(circle, #B8D400 1.5px, transparent 1.5px); background-size: 12px 12px;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OFFER SECTION -->
+    <section id="oferta" class="py-24 lg:py-32 relative" style="background: linear-gradient(180deg, #F7F7F5 0%, #EFF0EC 50%, #F7F7F5 100%);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <div class="reveal">
+                    <span class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest" style="color: #0099CC;">
+                        <span class="w-8 h-px" style="background: #0099CC;"></span>
+                        Usługi
+                        <span class="w-8 h-px" style="background: #0099CC;"></span>
+                    </span>
+                </div>
+                <h2 class="reveal text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-[#1E2D3D] mt-4" style="font-family: Montserrat, sans-serif;">
+                    Nasza Oferta
+                </h2>
+                <p class="reveal text-base text-gray-500 mt-4" style="">
+                    Oferujemy kompleksowe usługi sprzątania dostosowane do potrzeb każdego klienta.
+                </p>
+            </div>
+
+            <!-- Cards grid -->
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children">
+                <!-- Card 1 -->
+                <div class="reveal card-glow bg-white rounded-2xl p-6 border border-gray-100 cursor-pointer group" onclick="this.querySelector('.cta-btn').classList.toggle('hidden')">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110" style="background: linear-gradient(135deg, rgba(0,153,204,0.1), rgba(184,212,0,0.1));">
+                        <iconify-icon icon="solar:broom-linear" width="28" style="color: #0099CC;"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold tracking-tight text-[#1E2D3D] mb-2" style="font-family:'Montserrat',sans-serif;">Sprzątanie Codzienne</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed mb-4">Szkoły, biura, hale i inne pomieszczenia użyteczności publicznej.</p>
+                    <div class="h-1 w-0 rounded-full group-hover:w-full transition-all duration-500" style="background: linear-gradient(90deg, #0099CC, #B8D400);"></div>
+                    <a href="#kontakt" class="cta-btn hidden mt-4 inline-flex items-center gap-1.5 text-xs font-semibold" style="color: #0099CC;">
+                        Zapytaj o wycenę <iconify-icon icon="solar:arrow-right-linear" width="14"></iconify-icon>
+                    </a>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="reveal card-glow bg-white rounded-2xl p-6 border border-gray-100 cursor-pointer group" onclick="this.querySelector('.cta-btn').classList.toggle('hidden')">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110" style="background: linear-gradient(135deg, rgba(0,153,204,0.1), rgba(184,212,0,0.1));">
+                        <iconify-icon icon="solar:window-frame-linear" width="28" style="color: #0099CC;"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold tracking-tight text-[#1E2D3D] mb-2" style="font-family:'Montserrat',sans-serif;">Mycie Okien</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed mb-4">Gruntowne doczyszczanie powierzchni z polimeryzacją posadzek.</p>
+                    <div class="h-1 w-0 rounded-full group-hover:w-full transition-all duration-500" style="background: linear-gradient(90deg, #0099CC, #B8D400);"></div>
+                    <a href="#kontakt" class="cta-btn hidden mt-4 inline-flex items-center gap-1.5 text-xs font-semibold" style="color: #0099CC;">
+                        Zapytaj o wycenę <iconify-icon icon="solar:arrow-right-linear" width="14"></iconify-icon>
+                    </a>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="reveal card-glow bg-white rounded-2xl p-6 border border-gray-100 cursor-pointer group" onclick="this.querySelector('.cta-btn').classList.toggle('hidden')">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110" style="background: linear-gradient(135deg, rgba(0,153,204,0.1), rgba(184,212,0,0.1));">
+                        <iconify-icon icon="solar:leaf-linear" width="28" style="color: #0099CC;"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold tracking-tight text-[#1E2D3D] mb-2" style="font-family:'Montserrat',sans-serif;">Opieka nad Terenami</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed mb-4">Tereny zielone i zewnętrzne z profesjonalnym podejściem.</p>
+                    <div class="h-1 w-0 rounded-full group-hover:w-full transition-all duration-500" style="background: linear-gradient(90deg, #0099CC, #B8D400);"></div>
+                    <a href="#kontakt" class="cta-btn hidden mt-4 inline-flex items-center gap-1.5 text-xs font-semibold" style="color: #0099CC;">
+                        Zapytaj o wycenę <iconify-icon icon="solar:arrow-right-linear" width="14"></iconify-icon>
+                    </a>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="reveal card-glow bg-white rounded-2xl p-6 border border-gray-100 cursor-pointer group" onclick="this.querySelector('.cta-btn').classList.toggle('hidden')">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110" style="background: linear-gradient(135deg, rgba(0,153,204,0.1), rgba(184,212,0,0.1));">
+                        <iconify-icon icon="solar:bottle-linear" width="28" style="color: #0099CC;" class=""></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold tracking-tight text-[#1E2D3D] mb-2" style="font-family:'Montserrat',sans-serif;">Sprzedaż Środków</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed mb-4">Profesjonalne środki czystości, maszyny i urządzenia.</p>
+                    <div class="h-1 w-0 rounded-full group-hover:w-full transition-all duration-500" style="background: linear-gradient(90deg, #0099CC, #B8D400);"></div>
+                    <a href="#kontakt" class="cta-btn hidden mt-4 inline-flex items-center gap-1.5 text-xs font-semibold" style="color: #0099CC;">
+                        Zapytaj o wycenę <iconify-icon icon="solar:arrow-right-linear" width="14"></iconify-icon>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GALLERY SECTION -->
+    <section id="galeria" class="py-24 lg:py-32 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <div class="reveal">
+                    <span class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest" style="color: #0099CC;">
+                        <span class="w-8 h-px" style="background: #0099CC;"></span>
+                        Portfolio
+                        <span class="w-8 h-px" style="background: #0099CC;"></span>
+                    </span>
+                </div>
+                <h2 class="reveal text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-[#1E2D3D] mt-4" style="font-family: Montserrat, sans-serif;">
+                    Nasze Prace
+                </h2>
+                <p class="reveal text-base text-gray-500 mt-4" style="">
+                    Zobacz efekty naszej pracy u klientów na terenie całego regionu.
+                </p>
+            </div>
+
+            <!-- Gallery Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 stagger-children gap-x-4 gap-y-4">
+                <!-- Item 1 - wide -->
+                <div class="reveal gallery-item sm:col-span-2 relative rounded-2xl overflow-hidden cursor-pointer" style="aspect-ratio: 16/9;">
+                    <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/604d7392-abd2-464c-a212-11ebd24ea731_1600w.png" alt="Hale magazynowe" class="w-full h-full object-cover" style="">
+                    <div class="overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-[#B8D400]">Hale magazynowe</span>
+                        <p class="text-white text-lg font-semibold tracking-tight mt-1" style="font-family:'Montserrat',sans-serif;">Czyszczenie i polerowanie posadzek</p>
+                    </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="reveal gallery-item relative rounded-2xl overflow-hidden cursor-pointer" style="aspect-ratio: 1/1;">
+                    <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/bf36d006-8566-49f6-95ff-e662a8d9645b_800w.png" alt="Mycie okien" class="w-full h-full object-cover" style="">
+                    <div class="overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-[#B8D400]">Mycie okien</span>
+                        <p class="text-white text-base font-semibold tracking-tight mt-1" style="font-family:'Montserrat',sans-serif;">Budynki komercyjne</p>
+                    </div>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="reveal gallery-item relative rounded-2xl overflow-hidden cursor-pointer" style="aspect-ratio: 1/1;">
+                    <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/0551f490-8731-4cd4-94d3-4c2c3b4282cc_800w.jpg" alt="Obiekty sportowe" class="w-full h-full object-cover" style="">
+                    <div class="overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-[#B8D400]">Obiekty sportowe</span>
+                        <p class="text-white text-base font-semibold tracking-tight mt-1" style="font-family:'Montserrat',sans-serif;">Profesjonalne maszyny</p>
+                    </div>
+                </div>
+
+                <!-- Item 4 - wide -->
+                <div class="reveal gallery-item sm:col-span-2 relative rounded-2xl overflow-hidden cursor-pointer" style="aspect-ratio: 16/9;">
+                    <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/bae41a4c-dfce-40b3-bf51-9d3b429228aa_1600w.png" alt="Biura" class="w-full h-full object-cover">
+                    <div class="overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-[#B8D400]">Biura</span>
+                        <p class="text-white text-lg font-semibold tracking-tight mt-1" style="font-family:'Montserrat',sans-serif;">Codzienne utrzymanie czystości</p>
+                    </div>
+                </div>
+
+                <!-- Item 5 -->
+                <div class="reveal gallery-item relative rounded-2xl overflow-hidden cursor-pointer" style="aspect-ratio: 3/4;">
+                    <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/47f35e9e-a325-4b66-8ba8-6be1a3eb9053_800w.jpg" alt="Odkurzanie" class="w-full h-full object-cover">
+                    <div class="overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-[#B8D400]">Odkurzanie</span>
+                        <p class="text-white text-base font-semibold tracking-tight mt-1" style="font-family:'Montserrat',sans-serif;">Wykładziny i powierzchnie tekstylne</p>
+                    </div>
+                </div>
+
+                <!-- Item 6 -->
+                <div class="reveal gallery-item sm:col-span-2 lg:col-span-2 relative rounded-2xl overflow-hidden cursor-pointer" style="aspect-ratio: 16/7;">
+                    <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/a2334fc7-160a-4bd2-853b-86f165fc38db_1600w.jpg" alt="Posadzki" class="w-full h-full object-cover">
+                    <div class="overlay absolute inset-0 flex flex-col justify-end p-6">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-[#B8D400]">Posadzki przemysłowe</span>
+                        <p class="text-white text-lg font-semibold tracking-tight mt-1" style="font-family:'Montserrat',sans-serif;">Polerowanie i doczyszczanie</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA SECTION -->
+    <section class="py-24 lg:py-32 relative overflow-hidden" style="background: #0E1721;">
+        <!-- Glow blobs -->
+        <div class="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 rounded-full opacity-20" style="background: #0099CC; filter: blur(120px); animation: blob1 8s ease-in-out infinite;"></div>
+        <div class="absolute top-1/2 right-1/4 -translate-y-1/2 w-80 h-80 rounded-full opacity-15" style="background: #B8D400; filter: blur(120px); animation: blob2 10s ease-in-out infinite;"></div>
+
+        <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="reveal text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-white" style="font-family:'Montserrat',sans-serif;">
+                Potrzebujesz wsparcia w<br>
+                <span class="gradient-text">utrzymaniu czystości?</span>
+            </h2>
+            <p class="reveal text-base sm:text-lg text-white/50 mt-6 max-w-xl mx-auto" style="">
+                Nie mogłeś lepiej trafić. Skontaktuj się z nami — wycenę przygotujemy indywidualnie.
+            </p>
+            <div class="reveal mt-10 flex flex-col sm:flex-row gap-4 justify-center" style="">
+                <a href="#kontakt" class="magnetic-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-semibold text-white shadow-lg shadow-cyan-500/25" style="background: linear-gradient(135deg, #0099CC, #0BB8A0);">
+                    <span>Skontaktuj się</span>
+                    <iconify-icon icon="solar:arrow-right-linear" width="18"></iconify-icon>
+                </a>
+                <a href="tel:+48505874144" class="magnetic-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-semibold text-white border border-white/20 hover:bg-white/10 transition-colors">
+                    <iconify-icon icon="solar:phone-calling-linear" width="18"></iconify-icon>
+                    <span>+48 505 874 144</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- REFERENCES SECTION -->
+    <section id="referencje" class="py-24 lg:py-32 relative" style="background: linear-gradient(180deg, #F7F7F5 0%, #EFF0EC 100%);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <div class="reveal">
+                    <span class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest" style="color: #0099CC;">
+                        <span class="w-8 h-px" style="background: #0099CC;"></span>
+                        Zaufali nam
+                        <span class="w-8 h-px" style="background: #0099CC;"></span>
+                    </span>
+                </div>
+                <h2 class="reveal text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-[#1E2D3D] mt-4" style="font-family: Montserrat, sans-serif;">
+                    Referencje
+                </h2>
+                <p class="reveal text-base text-gray-500 mt-4" style="">
+                    Pracowaliśmy z licznymi instytucjami i firmami na terenie Polski.
+                </p>
+            </div>
+
+            <!-- Reference Cards -->
+            <div class="grid sm:grid-cols-2 gap-5 max-w-4xl mx-auto stagger-children">
+                <!-- Ref 1 -->
+                <div class="reveal ref-card bg-white rounded-2xl p-6 border border-gray-100 flex items-start gap-5">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style="background: linear-gradient(135deg, #0099CC, #B8D400);">
+                        <iconify-icon icon="solar:verified-check-linear" width="24" class="text-white"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">Szkoła Podstawowa</h3>
+                        <p class="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                            <iconify-icon icon="solar:map-point-linear" width="14" style="color: #0099CC;"></iconify-icon>
+                            Sztum
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Ref 2 -->
+                <div class="reveal ref-card bg-white rounded-2xl p-6 border border-gray-100 flex items-start gap-5">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style="background: linear-gradient(135deg, #0099CC, #B8D400);">
+                        <iconify-icon icon="solar:verified-check-linear" width="24" class="text-white"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">Biuro Administracyjne</h3>
+                        <p class="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                            <iconify-icon icon="solar:map-point-linear" width="14" style="color: #0099CC;"></iconify-icon>
+                            Pomorzanie
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Ref 3 -->
+                <div class="reveal ref-card bg-white rounded-2xl p-6 border border-gray-100 flex items-start gap-5">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style="background: linear-gradient(135deg, #0099CC, #B8D400);">
+                        <iconify-icon icon="solar:verified-check-linear" width="24" class="text-white"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">Centrum Handlowe</h3>
+                        <p class="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                            <iconify-icon icon="solar:map-point-linear" width="14" style="color: #0099CC;"></iconify-icon>
+                            Warmińsko-Mazurskie
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Ref 4 -->
+                <div class="reveal ref-card bg-white rounded-2xl p-6 border border-gray-100 flex items-start gap-5">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style="background: linear-gradient(135deg, #0099CC, #B8D400);">
+                        <iconify-icon icon="solar:verified-check-linear" width="24" class="text-white"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-[#1E2D3D] tracking-tight" style="font-family:'Montserrat',sans-serif;">Budynek Mieszkalny</h3>
+                        <p class="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                            <iconify-icon icon="solar:map-point-linear" width="14" style="color: #0099CC;"></iconify-icon>
+                            Sztum
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="kontakt" class="py-24 lg:py-32 relative bg-[#F7F7F5]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <div class="reveal">
+                    <span class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest" style="color: #0099CC;">
+                        <span class="w-8 h-px" style="background: #0099CC;"></span>
+                        Napisz do nas
+                        <span class="w-8 h-px" style="background: #0099CC;"></span>
+                    </span>
+                </div>
+                <h2 class="reveal text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-[#1E2D3D] mt-4" style="font-family: Montserrat, sans-serif;">
+                    Kontakt
+                </h2>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16">
+                <!-- Left - contact info -->
+                <div class="reveal-left space-y-8">
+                    <div>
+                        <h3 class="text-xl font-semibold tracking-tight text-[#1E2D3D]" style="font-family:'Montserrat',sans-serif;">LUXOR — Kompleksowe Utrzymanie Czystości</h3>
+                        <p class="text-sm text-gray-500 mt-2">Jesteśmy do Twojej dyspozycji. Skontaktuj się z nami w dowolny sposób.</p>
+                    </div>
+
+                    <div class="space-y-5">
+                        <!-- Address -->
+                        <div class="flex items-center gap-4 group">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center border border-gray-200 group-hover:border-transparent transition-all" style="background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                                <iconify-icon icon="solar:map-point-linear" width="22" style="color: #0099CC;"></iconify-icon>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 font-medium uppercase tracking-wider">Adres</p>
+                                <p class="text-sm font-medium text-[#1E2D3D]">Os. Witosa 30, 82-400 Sztum</p>
+                            </div>
+                        </div>
+
+                        <!-- Phone -->
+                        <a href="tel:+48505874144" class="flex items-center gap-4 group">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center border border-gray-200 group-hover:border-transparent transition-all" style="background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                                <iconify-icon icon="solar:phone-calling-linear" width="22" style="color: #0099CC;"></iconify-icon>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 font-medium uppercase tracking-wider">Telefon</p>
+                                <p class="text-sm font-medium text-[#1E2D3D] group-hover:text-[#0099CC] transition-colors">+48 505 874 144</p>
+                            </div>
+                        </a>
+
+                        <!-- Email -->
+                        <a href="mailto:luxor.kuc@gmail.com" class="flex items-center gap-4 group">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center border border-gray-200 group-hover:border-transparent transition-all" style="background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                                <iconify-icon icon="solar:letter-linear" width="22" style="color: #0099CC;"></iconify-icon>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 font-medium uppercase tracking-wider">Email</p>
+                                <p class="text-sm font-medium text-[#1E2D3D] group-hover:text-[#0099CC] transition-colors">luxor.kuc@gmail.com</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Map placeholder -->
+                    <div class="rounded-2xl overflow-hidden border border-gray-200 h-48" style="background: #E8E8E4;">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d18544.6!2d19.033!3d53.917!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47028e0e44e13c31%3A0x400f39c22a7b0!2sSztum!5e0!3m2!1sen!2spl!4v1" width="100%" height="100%" style="border:0; filter: saturate(0.5) contrast(1.1);" allowfullscreen="" loading="lazy"></iframe>
+                    </div>
+                </div>
+
+                <!-- Right - form -->
+                <div class="reveal-right">
+                    <div class="bg-white rounded-3xl p-8 lg:p-10 border border-gray-100 shadow-xl shadow-gray-200/30">
+                        <h3 class="text-xl font-semibold tracking-tight text-[#1E2D3D] mb-6" style="font-family:'Montserrat',sans-serif;">Wyślij nam wiadomość</h3>
+                        <form class="space-y-5" onsubmit="event.preventDefault(); showToast();">
+                            <div class="">
+                                <label class="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Imię i nazwisko</label>
+                                <input type="text" required="" class="form-input w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-[#1E2D3D] outline-none transition-all bg-gray-50/50 focus:bg-white placeholder-gray-400" placeholder="Jan Kowalski">
+                            </div>
+                            <div class="">
+                                <label class="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Email</label>
+                                <input type="email" required="" class="form-input w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-[#1E2D3D] outline-none transition-all bg-gray-50/50 focus:bg-white placeholder-gray-400" placeholder="jan@firma.pl">
+                            </div>
+                            <div class="">
+                                <label class="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Wiadomość</label>
+                                <textarea rows="5" required="" class="form-input w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-[#1E2D3D] outline-none transition-all bg-gray-50/50 focus:bg-white placeholder-gray-400 resize-none" placeholder="Opisz czego potrzebujesz..."></textarea>
+                            </div>
+                            <button type="submit" class="magnetic-btn w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold text-white transition-all" style="background: linear-gradient(135deg, #0099CC, #0BB8A0);">
+                                <span class="">Wyślij wiadomość</span>
+                                <iconify-icon icon="solar:arrow-right-linear" width="18"></iconify-icon>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-12 relative" style="background: #141C28;">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+                <!-- Logo -->
+                <div class="flex items-center gap-2 opacity-50">
+                    <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #0099CC, #B8D400);">
+                        <span class="text-white font-bold text-xs" style="font-family: 'Montserrat', sans-serif; letter-spacing: -0.05em;">L</span>
+                    </div>
+                    <span class="text-sm font-semibold tracking-tighter text-white/60" style="font-family: 'Montserrat', sans-serif;">LUXOR</span>
+                </div>
+
+                <!-- Copyright -->
+                <p class="text-xs text-white/30 text-center">
+                    © 2025 LUXOR — Kompleksowe Utrzymanie Czystości. Wszelkie prawa zastrzeżone.
+                </p>
+
+                <!-- Social / back to top -->
+                <button onclick="window.scrollTo({top:0,behavior:'smooth'})" class="flex items-center gap-2 text-xs text-white/30 hover:text-white/60 transition-colors">
+                    <span>Do góry</span>
+                    <iconify-icon icon="solar:alt-arrow-up-linear" width="16"></iconify-icon>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast notification -->
+    <div id="toast" class="fixed bottom-8 right-8 z-50 bg-white rounded-2xl px-6 py-4 shadow-2xl shadow-black/10 border border-gray-100 flex items-center gap-3 translate-y-20 opacity-0 transition-all duration-500" style="pointer-events: none;">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #B8D400, #8CAA00);">
+            <iconify-icon icon="solar:check-circle-linear" width="22" class="text-white"></iconify-icon>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-[#1E2D3D]" style="font-family:'Montserrat',sans-serif;">Wiadomość wysłana!</p>
+            <p class="text-xs text-gray-500">Odezwiemy się wkrótce.</p>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const bar1 = document.getElementById('bar1');
+            const bar2 = document.getElementById('bar2');
+            const bar3 = document.getElementById('bar3');
+            menu.classList.toggle('open');
+            if (menu.classList.contains('open')) {
+                bar1.style.transform = 'rotate(45deg) translate(3px, 3px)';
+                bar2.style.opacity = '0';
+                bar3.style.transform = 'rotate(-45deg) translate(3px, -3px)';
+                bar3.style.width = '1.25rem';
+            } else {
+                bar1.style.transform = '';
+                bar2.style.opacity = '1';
+                bar3.style.transform = '';
+                bar3.style.width = '0.875rem';
+            }
+        }
+
+        // Cursor glow
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.getElementById('cursorGlow');
+            if (glow) {
+                glow.style.left = e.clientX + 'px';
+                glow.style.top = e.clientY + 'px';
+            }
+        });
+
+        // Scroll reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Counter animation
+        function animateCounters() {
+            document.querySelectorAll('[data-target]').forEach(el => {
+                const target = parseInt(el.getAttribute('data-target'));
+                const suffix = el.textContent.includes('+') ? '+' : '';
+                const duration = 2000;
+                const start = performance.now();
+
+                function update(now) {
+                    const elapsed = now - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 4);
+                    const current = Math.floor(eased * target);
+                    el.textContent = current + suffix;
+                    if (progress < 1) requestAnimationFrame(update);
+                }
+                requestAnimationFrame(update);
+            });
+        }
+
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounters();
+                    statsObserver.disconnect();
+                }
+            });
+        }, { threshold: 0.5 });
+
+        const statsSection = document.querySelector('[data-target]');
+        if (statsSection) statsObserver.observe(statsSection.closest('section'));
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.style.borderBottomColor = 'rgba(0,0,0,0.06)';
+                nav.style.background = 'rgba(255,255,255,0.85)';
+            } else {
+                nav.style.borderBottomColor = 'rgba(0,0,0,0.02)';
+                nav.style.background = 'rgba(255,255,255,0.7)';
+            }
+        });
+
+        // Toast
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.style.pointerEvents = 'auto';
+            toast.style.transform = 'translateY(0)';
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.transform = 'translateY(20px)';
+                toast.style.opacity = '0';
+                toast.style.pointerEvents = 'none';
+            }, 3000);
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const offset = 80;
+                    const pos = target.getBoundingClientRect().top + window.scrollY - offset;
+                    window.scrollTo({ top: pos, behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+
+</body></html>
